@@ -1,0 +1,48 @@
+version: '3'
+
+services:
+  mysql-db:
+    # volumes:
+    #   - ./db:/var/lib/mysql
+    image: mysql:8.0
+    container_name: mysql-server-80
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=.sweetpwd.
+      - MYSQL_DATABASE=my_db
+      - MYSQL_USER=db_user
+      - MYSQL_PASSWORD=.mypwd
+    ports:
+      - 8082:3306
+
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    links:
+      - mysql-db
+    environment:
+      PMA_HOST: mysql-db
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+    restart: always
+    ports:
+      - 1881:80
+    depends_on:
+      - mysql-db      
+
+  php-website:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    image: php-website
+    container_name: php-website
+    environment:
+      XDEBUG_CONFIG: remote_host=host.docker.internal remote_port=9000 remote_enable=1
+    ports:
+      - 1880:80
+    depends_on:
+      - mysql-db
+    volumes:
+        - ./src:/var/www/html
